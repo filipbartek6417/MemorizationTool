@@ -13,6 +13,7 @@ class Flashcard(Base):  # Declaration of the db table
     id = Column(Integer, primary_key=True)
     question = Column(String)
     answer = Column(String)
+    box_number = Column(Integer, default=1)
 
 
 # session.query(Flashcard).delete()  # These 2 lines clear the db
@@ -45,26 +46,42 @@ while (inp1 := input(f'1. Add flashcards\n'
                                     f'press "n" to skip:\n'
                                     f'press "u" to update:\n')) not in ['y', 'n', 'u']:
                     print(f'{ans} is not an option')
-                if ans == 'y':
-                    print(f'Answer: {card.answer}')
-                elif ans == 'u':
+                if ans == 'u':
                     while (opt := input(f'press "d" to delete the flashcard:\n'
-                                       f'press "e" to edit the flashcard:\n')) not in ['d', 'e']:
+                                        f'press "e" to edit the flashcard:\n')) not in ['d', 'e']:
                         print(f'{opt} is not an option')
                     if opt == 'd':
                         # delete the flashcard
                         session.delete(card)
                     else:
                         # edit the flashcard
+                        # I haven't found a reasonable way to iterate
+                        # so I decided to do it one-by-one
                         if (new_question := input(f'current question: {card.question}\n'
                                                   f'please write a new question:\n')) != '':
                             card.question = new_question
                         if (new_answer := input(f'current answer: {card.answer}\n'
                                                 f'please write a new answer:\n')) != '':
                             card.answer = new_answer
-                    session.commit()
+                else:
+                    # if not updating
+                    if ans == 'y':
+                        print(f'Answer: {card.answer}')
+                    while (cor := input(f'press "y" if your answer is correct:\n'
+                                        f'press "n" if your answer is wrong:\n'))\
+                            not in ['y', 'n']:
+                        print(f'{cor} is not an option')
+                    if cor == 'y':
+                        # increase and delete by card numbers
+                        card.box_number += 1
+                        if card.box_number > 3:
+                            session.delete(card)
+                    else:
+                        # if failed, return to 1
+                        card.box_number = 1
+                session.commit()
         else:
-            print('There are no flashcards to practice!')
+            print('There is no flashcard to practice!')
     else:
         print(f'{inp1} is not an option')
 print('Bye!')
